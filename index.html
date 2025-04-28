@@ -19,10 +19,24 @@
       border-radius: 15px;
       box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
     }
-    h2 {
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #2B2D42; /* 🔥 Azul oscuro */
+      padding: 15px;
+      border-radius: 10px 10px 0 0;
+      margin: -25px -25px 20px -25px;
+    }
+    .header img {
+      height: 50px;
+      margin-right: 15px;
+    }
+    .header h2 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 22px;
       text-align: center;
-      color: #2e7d32;
-      margin-bottom: 20px;
     }
     label {
       font-weight: bold;
@@ -39,7 +53,7 @@
       font-size: 16px;
     }
     button {
-      background-color: #2e7d32;
+      background-color: #38896F; /* 🔥 Verde nuevo */
       color: white;
       border: none;
       margin-top: 25px;
@@ -47,7 +61,7 @@
       font-weight: bold;
     }
     button:hover {
-      background-color: #1b5e20;
+      background-color: #2E6F5D; /* Un poco más oscuro al pasar el mouse */
     }
     @media (max-width: 480px) {
       .form-container {
@@ -57,12 +71,22 @@
         font-size: 15px;
         padding: 10px;
       }
+      .header {
+        flex-direction: column;
+      }
+      .header img {
+        margin: 0 0 10px 0;
+      }
     }
   </style>
 </head>
 <body>
   <div class="form-container">
-    <h2>Reporte de Horas Extra<br>Gus Comercial</h2>
+    <div class="header">
+      <img src="img.png" alt="Logo Gus Comercial">
+      <h2>Reporte de Horas Extra<br>Gus Comercial</h2>
+    </div>
+
     <form action="https://script.google.com/macros/s/AKfycbyfhEcKk0oqOfb9C18pAOr4ZhEvfbYUPETLZU8pdraqorA0sD8paDoP9VAV7m8LceHV/exec" method="post">
       <label>Nombre y Apellido:</label>
       <select name="nombre" required>
