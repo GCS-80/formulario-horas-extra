@@ -122,16 +122,17 @@
       <label>Cantidad de horas reportadas:</label>
       <input type="number" name="cantidad" step="0.5" min="0.5" required readonly>
 
-      <!-- CAMPO CONCEPTO MODIFICADO -->
+      <!-- CAMPO ORDEN / FACTURA ASOCIADA -->
       <label>Orden o Factura Asociada:</label>
       <input
-      type="text"
-      name="concepto"
-      required
-      inputmode="numeric"
-      pattern="^\d{1,5}([,-]\d{1,5})*$"
-      placeholder="Ej: 12345 o 12345-2 o 123,456">
-      <!-- FIN CAMPO CONCEPTO -->
+        type="text"
+        id="concepto"
+        name="concepto"
+        required
+        inputmode="numeric"
+        pattern="^\d{1,5}([,-]\d{1,5})*$"
+        placeholder="Ej: 12345 o 12345-2 o 123,456">
+      <!-- FIN CAMPO ORDEN / FACTURA ASOCIADA -->
 
       <label>Vehículo:</label>
       <select name="vehiculo" required>
@@ -163,6 +164,7 @@
   </div>
 
   <script>
+    // === RESTRICCIÓN DE FECHA: SOLO HOY Y AYER ===
     const fechaInput = document.querySelector('input[name="fecha"]');
     const hoy = new Date();
     const ayer = new Date(hoy);
@@ -170,6 +172,7 @@
     fechaInput.max = hoy.toISOString().split("T")[0];
     fechaInput.min = ayer.toISOString().split("T")[0];
 
+    // === CÁLCULO AUTOMÁTICO DE HORAS ===
     const horaInicio = document.querySelector('input[name="hora_inicio"]');
     const horaFin = document.querySelector('input[name="hora_fin"]');
     const cantidadHoras = document.querySelector('input[name="cantidad"]');
@@ -189,8 +192,37 @@
 
     horaInicio.addEventListener("change", calcularHoras);
     horaFin.addEventListener("change", calcularHoras);
+
+    // === RESTRICCIÓN PARA ORDEN O FACTURA ASOCIADA ===
+    const conceptoInput = document.getElementById("concepto");
+
+    // Bloquear letras y caracteres no permitidos al teclear
+    conceptoInput.addEventListener("keypress", function (e) {
+      const char = e.key;
+
+      // Permitir teclas de control (backspace, tab, etc.) a través de keyCode
+      const controlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+      if (controlKeys.includes(e.key)) {
+        return;
+      }
+
+      // Permitir combinaciones con Ctrl/Meta (copiar, pegar, etc.)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // Solo permitir dígitos, coma y guion
+      const regex = /[0-9,-]/;
+
+      if (!regex.test(char)) {
+        e.preventDefault();
+      }
+    });
+
+    // Limpiar cualquier cosa rara pegada desde el portapapeles
+    conceptoInput.addEventListener("input", function () {
+      // Eliminar todo lo que no sea dígito, coma o guion
+      this.value = this.value.replace(/[^0-9,-]/g, "");
+    });
   </script>
 
 </body>
 </html>
-
