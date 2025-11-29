@@ -125,15 +125,12 @@
       <!-- CAMPO CONCEPTO MODIFICADO -->
       <label>Orden o Factura Asociada:</label>
       <input
-        type="number"
-        name="concepto"
-        required
-        min="1"
-        max="99999"
-        step="1"
-        inputmode="numeric"
-        pattern="\d{1,5}"
-        placeholder="Ej: 12345">
+      type="text"
+      name="concepto"
+      required
+      inputmode="numeric"
+      pattern="^\d{1,5}([,-]\d{1,5})*$"
+      placeholder="Ej: 12345 o 12345-2 o 123,456">
       <!-- FIN CAMPO CONCEPTO -->
 
       <label>Vehículo:</label>
@@ -196,3 +193,4 @@
 
 </body>
 </html>
+
