@@ -122,8 +122,19 @@
       <label>Cantidad de horas reportadas:</label>
       <input type="number" name="cantidad" step="0.5" min="0.5" required readonly>
 
-      <label>Ordenes o Facturas asociadas:</label>
-      <input type="number" name="Ordenes o Facturas" value="">
+      <!-- CAMPO CONCEPTO MODIFICADO -->
+      <label>Orden o Factura Asociada:</label>
+      <input
+        type="number"
+        name="concepto"
+        required
+        min="1"
+        max="99999"
+        step="1"
+        inputmode="numeric"
+        pattern="\d{1,5}"
+        placeholder="Ej: 12345">
+      <!-- FIN CAMPO CONCEPTO -->
 
       <label>Vehículo:</label>
       <select name="vehiculo" required>
@@ -185,9 +196,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
