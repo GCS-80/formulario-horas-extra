@@ -165,128 +165,143 @@
 
  <script>
 
-    /* ================================
-       FECHA: SOLO HOY Y AYER
-    ================================= */
-    const fechaInput = document.querySelector('input[name="fecha"]');
-    const hoy = new Date();
-    const ayer = new Date();
-    ayer.setDate(hoy.getDate() - 1);
+    <script>
+  // === RESTRICCIÓN DE FECHA: SOLO HOY Y AYER ===
+  const fechaInput = document.querySelector('input[name="fecha"]');
+  const hoy = new Date();
+  const ayer = new Date();
+  ayer.setDate(hoy.getDate() - 1);
+  fechaInput.max = hoy.toISOString().split("T")[0];
+  fechaInput.min = ayer.toISOString().split("T")[0];
 
-    fechaInput.max = hoy.toISOString().split("T")[0];
-    fechaInput.min = ayer.toISOString().split("T")[0];
+  // === CÁLCULO AUTOMÁTICO DE HORAS (escucha change + input) ===
+  const horaInicio = document.querySelector('input[name="hora_inicio"]');
+  const horaFin = document.querySelector('input[name="hora_fin"]');
+  const cantidadHoras = document.querySelector('input[name="cantidad"]');
 
+  function calcularHoras() {
+    if (!horaInicio.value || !horaFin.value) {
+      cantidadHoras.value = "";
+      return;
+    }
+    const inicio = new Date(`1970-01-01T${horaInicio.value}`);
+    const fin = new Date(`1970-01-01T${horaFin.value}`);
+    if (isNaN(inicio) || isNaN(fin) || fin <= inicio) {
+      cantidadHoras.value = "";
+      return;
+    }
+    const horas = (fin - inicio) / 1000 / 60 / 60;
+    cantidadHoras.value = horas.toFixed(2);
+  }
 
-    /* ================================
-       CÁLCULO DE HORAS AUTOMÁTICO
-    ================================= */
-    const horaInicio = document.querySelector('input[name="hora_inicio"]');
-    const horaFin = document.querySelector('input[name="hora_fin"]');
-    const cantidadHoras = document.querySelector('input[name="cantidad"]');
+  horaInicio.addEventListener("change", calcularHoras);
+  horaFin.addEventListener("change", calcularHoras);
+  horaInicio.addEventListener("input", calcularHoras);
+  horaFin.addEventListener("input", calcularHoras);
 
-    function calcularHoras() {
-        if (!horaInicio.value || !horaFin.value) {
-            cantidadHoras.value = "";
-            return;
-        }
+  // === VALIDACIÓN: SOLO NÚMEROS Y ESPACIOS (ESPACIO FUNCIONANDO) ===
+  const conceptoInput = document.getElementById("concepto");
+  const form = document.getElementById("horasForm");
 
-        const inicio = new Date(`1970-01-01T${horaInicio.value}`);
-        const fin = new Date(`1970-01-01T${horaFin.value}`);
+  function isSpaceKey(e) {
+    // e.key covers most modern browsers; fallback to keyCode for older ones
+    const k = e.key;
+    if (k === " " || k === "Space" || k === "Spacebar") return true;
+    if (typeof e.keyCode === "number" && e.keyCode === 32) return true;
+    return false;
+  }
 
-        if (fin <= inicio) {
-            cantidadHoras.value = "";
-            return;
-        }
+  // keydown para bloquear caracteres no deseados en navegadores de escritorio
+  conceptoInput.addEventListener("keydown", function (e) {
+    const key = e.key;
 
-        const horas = (fin - inicio) / 1000 / 60 / 60;
-        cantidadHoras.value = horas.toFixed(2);
+    // permitir combinaciones de control (ctrl/cmd), copiar/pegar y navegación
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+    const controlKeys = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "Enter"];
+    if (controlKeys.includes(key)) return;
+
+    // espacio (varias representaciones) -> permitir con condiciones
+    if (isSpaceKey(e)) {
+      // no permitir espacio al inicio
+      if (this.value.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      // no permitir doble espacio
+      if (this.value.endsWith(" ")) {
+        e.preventDefault();
+        return;
+      }
+      // permitir espacio válido
+      return;
     }
 
-    horaInicio.addEventListener("change", calcularHoras);
-    horaFin.addEventListener("change", calcularHoras);
+    // para teclas de carácter, permitir solo dígitos 0-9
+    // en algunos navegadores key puede ser una cadena de longitud 1
+    if (key && key.length === 1) {
+      if (!/^[0-9]$/.test(key)) {
+        e.preventDefault();
+        return;
+      }
+      return; // dígito permitido
+    }
 
+    // por defecto, prevenir (evita comportamientos raros en algunos navegadores)
+    e.preventDefault();
+  });
 
+  // input para limpiar cualquier cosa pegada o ingresada por teclados móviles
+  conceptoInput.addEventListener("input", function () {
+    let v = this.value;
 
-    /* ================================
-       VALIDACIÓN: SOLO NÚMEROS Y ESPACIOS
-    ================================= */
-    const conceptoInput = document.getElementById("concepto");
+    // eliminar todo excepto dígitos y espacios
+    v = v.replace(/[^0-9 ]/g, "");
 
-    // Evitar letras y símbolos al escribir
-    conceptoInput.addEventListener("keydown", function (e) {
-        const key = e.key;
+    // eliminar espacios al inicio y final
+    v = v.replace(/^\s+/, "").replace(/\s+$/, "");
 
-        // Permitir teclas de control
-        const control = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End"];
-        if (control.includes(key) || e.ctrlKey || e.metaKey) return;
+    // reemplazar múltiples espacios por uno solo
+    v = v.replace(/\s{2,}/g, " ");
 
-        // Permitir espacio simple
-        if (key === " ") {
-            // No permitir espacio al inicio
-            if (this.value.length === 0) {
-                e.preventDefault();
-                return;
-            }
-            // No permitir doble espacio
-            if (this.value.endsWith(" ")) {
-                e.preventDefault();
-                return;
-            }
-            return;
-        }
+    this.value = v;
+  });
 
-        // Solo números 0-9
-        if (!/^[0-9]$/.test(key)) {
-            e.preventDefault();
-        }
-    });
+  // validación final antes de enviar
+  form.addEventListener("submit", function (e) {
+    const vRaw = conceptoInput.value;
+    const v = vRaw.trim();
 
-    // Limpieza al pegar
-    conceptoInput.addEventListener("input", function () {
-        let v = this.value;
+    if (v.length === 0) {
+      alert("Debe ingresar una orden o factura válida.");
+      e.preventDefault();
+      return;
+    }
 
-        // Solo números y espacios
-        v = v.replace(/[^0-9 ]/g, "");
+    if (!/^[0-9 ]+$/.test(v)) {
+      alert("Solo se permiten números y espacios en 'Orden o Factura Asociada'.");
+      e.preventDefault();
+      return;
+    }
 
-        // Quitar espacios iniciales y finales
-        v = v.trimStart().trimEnd();
+    if (/\s{2,}/.test(v)) {
+      alert("No se permiten espacios consecutivos en 'Orden o Factura Asociada'.");
+      e.preventDefault();
+      return;
+    }
 
-        // Quitar dobles espacios
-        v = v.replace(/\s{2,}/g, " ");
-
-        this.value = v;
-    });
-
-
-    /* ================================
-       VALIDACIÓN FINAL DEL FORMULARIO
-    ================================= */
-    const form = document.querySelector("form");
-
-    form.addEventListener("submit", function (e) {
-        const v = conceptoInput.value.trim();
-
-        if (v.length === 0) {
-            alert("Debe ingresar una orden o factura válida.");
-            e.preventDefault();
-            return;
-        }
-
-        if (!/^[0-9 ]+$/.test(v)) {
-            alert("Solo se permiten números y espacios.");
-            e.preventDefault();
-            return;
-        }
-
-        if (/\s{2,}/.test(v)) {
-            alert("No se permiten espacios consecutivos.");
-            e.preventDefault();
-            return;
-        }
-    });
-
+    // (Opcional) validar hora calculada
+    if (!cantidadHoras.value) {
+      // si quieres forzar que la hora sea válida, descomenta lo siguiente:
+      // alert("Verifique las horas: la hora de fin debe ser posterior a la de inicio.");
+      // e.preventDefault();
+      // return;
+    }
+    // si todo ok, el formulario se envía
+  });
 </script>
 </body>
 </html>
+
 
 
