@@ -35,21 +35,21 @@
   conceptoInput.addEventListener("keypress", function (e) {
     const char = e.key;
 
-    // Permitir teclas de control
+    // Teclas de control permitidas
     const controlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
     if (controlKeys.includes(char)) return;
 
-    // Permitir solo dígitos y espacio
+    // Solo números y espacio
     const regex = /^[0-9 ]$/;
 
     if (!regex.test(char)) {
       e.preventDefault();
+      return;
     }
   });
 
   // Limpiar cualquier cosa rara pegada desde el portapapeles
   conceptoInput.addEventListener("input", function () {
-    // Dejar solo dígitos y espacio
     this.value = this.value.replace(/[^0-9 ]/g, "");
   });
 </script>
