@@ -163,134 +163,130 @@
     </form>
   </div>
 
-  <script>
-  // === RESTRICCIÓN DE FECHA: SOLO HOY Y AYER ===
-  const fechaInput = document.querySelector('input[name="fecha"]');
-  const hoy = new Date();
-  const ayer = new Date(hoy);
-  ayer.setDate(hoy.getDate() - 1);
-  fechaInput.max = hoy.toISOString().split("T")[0];
-  fechaInput.min = ayer.toISOString().split("T")[0];
+ <script>
 
-  // === CÁLCULO AUTOMÁTICO DE HORAS ===
-  const horaInicio = document.querySelector('input[name="hora_inicio"]');
-  const horaFin = document.querySelector('input[name="hora_fin"]');
-  const cantidadHoras = document.querySelector('input[name="cantidad"]');
+    /* ================================
+       FECHA: SOLO HOY Y AYER
+    ================================= */
+    const fechaInput = document.querySelector('input[name="fecha"]');
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
 
-  function calcularHoras() {
-    if (horaInicio.value && horaFin.value) {
-      const inicio = new Date(`1970-01-01T${horaInicio.value}`);
-      const fin = new Date(`1970-01-01T${horaFin.value}`);
-      if (fin > inicio) {
+    fechaInput.max = hoy.toISOString().split("T")[0];
+    fechaInput.min = ayer.toISOString().split("T")[0];
+
+
+    /* ================================
+       CÁLCULO DE HORAS AUTOMÁTICO
+    ================================= */
+    const horaInicio = document.querySelector('input[name="hora_inicio"]');
+    const horaFin = document.querySelector('input[name="hora_fin"]');
+    const cantidadHoras = document.querySelector('input[name="cantidad"]');
+
+    function calcularHoras() {
+        if (!horaInicio.value || !horaFin.value) {
+            cantidadHoras.value = "";
+            return;
+        }
+
+        const inicio = new Date(`1970-01-01T${horaInicio.value}`);
+        const fin = new Date(`1970-01-01T${horaFin.value}`);
+
+        if (fin <= inicio) {
+            cantidadHoras.value = "";
+            return;
+        }
+
         const horas = (fin - inicio) / 1000 / 60 / 60;
         cantidadHoras.value = horas.toFixed(2);
-      } else {
-        cantidadHoras.value = "";
-      }
-    }
-  }
-
-  horaInicio.addEventListener("change", calcularHoras);
-  horaFin.addEventListener("change", calcularHoras);
-
-  // === RESTRICCIÓN PARA ORDEN / FACTURA: SOLO NÚMEROS Y ESPACIO ===
-  const conceptoInput = document.getElementById("concepto");
-
-  // Helper: reconoce si la tecla es un espacio (cubriendo variantes)
-  function isSpaceKey(key) {
-    return key === " " || key === "Spacebar" || key === "Space";
-  }
-
-  // --- 1. Bloquear caracteres no permitidos al escribir (keydown para mejor control) ---
-  conceptoInput.addEventListener("keydown", function (e) {
-    const key = e.key;
-
-    // Permitir teclas de control y navegación
-    const allowedControlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End", "Enter"];
-    if (allowedControlKeys.includes(key) || e.ctrlKey || e.metaKey || e.altKey) return;
-
-    // Si la tecla es identificada como espacio por el navegador, normalizamos a " "
-    if (isSpaceKey(key)) {
-      // No permitir comenzar con espacio
-      if (this.value.length === 0) {
-        e.preventDefault();
-        return;
-      }
-      // No permitir doble espacio
-      if (this.value.slice(-1) === " ") {
-        e.preventDefault();
-        return;
-      }
-      // espacio permitido en demás casos
-      return;
     }
 
-    // Para teclas de un solo carácter (números, letras, símbolos), permitir solo dígitos
-    if (key.length === 1) {
-      const regex = /^[0-9]$/;
-      if (!regex.test(key)) {
-        e.preventDefault();
-        return;
-      }
-      // si pasa la regex, permitir
-      return;
-    }
+    horaInicio.addEventListener("change", calcularHoras);
+    horaFin.addEventListener("change", calcularHoras);
 
-    // Para cualquier otra clave desconocida, prevenir por seguridad
-    e.preventDefault();
-  });
 
-  // --- 2. Limpieza automática al pegar / introducir ---
-  conceptoInput.addEventListener("input", function () {
-    let val = this.value;
 
-    // Eliminar todo lo que no sea dígito o espacio
-    val = val.replace(/[^0-9 ]/g, "");
+    /* ================================
+       VALIDACIÓN: SOLO NÚMEROS Y ESPACIOS
+    ================================= */
+    const conceptoInput = document.getElementById("concepto");
 
-    // Quitar espacios al inicio y final
-    val = val.replace(/^\s+/, "").replace(/\s+$/, "");
+    // Evitar letras y símbolos al escribir
+    conceptoInput.addEventListener("keydown", function (e) {
+        const key = e.key;
 
-    // Reemplazar múltiples espacios por uno solo
-    val = val.replace(/\s{2,}/g, " ");
+        // Permitir teclas de control
+        const control = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End"];
+        if (control.includes(key) || e.ctrlKey || e.metaKey) return;
 
-    this.value = val;
-  });
+        // Permitir espacio simple
+        if (key === " ") {
+            // No permitir espacio al inicio
+            if (this.value.length === 0) {
+                e.preventDefault();
+                return;
+            }
+            // No permitir doble espacio
+            if (this.value.endsWith(" ")) {
+                e.preventDefault();
+                return;
+            }
+            return;
+        }
 
-  // --- 3. Validación final antes de enviar el formulario ---
-  const form = document.getElementById("horasForm");
-  form.addEventListener("submit", function (e) {
-    // Validar campo concepto
-    const raw = conceptoInput.value;
+        // Solo números 0-9
+        if (!/^[0-9]$/.test(key)) {
+            e.preventDefault();
+        }
+    });
 
-    if (!raw || raw.trim().length === 0) {
-      alert("Debe ingresar una orden o factura válida.");
-      e.preventDefault();
-      return;
-    }
+    // Limpieza al pegar
+    conceptoInput.addEventListener("input", function () {
+        let v = this.value;
 
-    const val = raw.trim();
+        // Solo números y espacios
+        v = v.replace(/[^0-9 ]/g, "");
 
-    // No permitir espacios al inicio o al final (ya limpiado, pero por seguridad)
-    if (/^\s|\s$/.test(raw)) {
-      alert("El campo Orden o Factura Asociada no puede comenzar ni terminar con espacio.");
-      e.preventDefault();
-      return;
-    }
+        // Quitar espacios iniciales y finales
+        v = v.trimStart().trimEnd();
 
-    // No permitir dobles espacios
-    if (/\s{2,}/.test(val)) {
-      alert("No se permiten espacios consecutivos en Orden o Factura Asociada.");
-      e.preventDefault();
-      return;
-    }
+        // Quitar dobles espacios
+        v = v.replace(/\s{2,}/g, " ");
 
-    // Solo dígitos y espacios (refuerzo)
-    if (!/^[0-9 ]+$/.test(val)) {
-      alert("Solo se permiten números y espacios en Orden o Factura Asociada.");
-      e.preventDefault();
-      return;
-    }
+        this.value = v;
+    });
 
+
+    /* ================================
+       VALIDACIÓN FINAL DEL FORMULARIO
+    ================================= */
+    const form = document.querySelector("form");
+
+    form.addEventListener("submit", function (e) {
+        const v = conceptoInput.value.trim();
+
+        if (v.length === 0) {
+            alert("Debe ingresar una orden o factura válida.");
+            e.preventDefault();
+            return;
+        }
+
+        if (!/^[0-9 ]+$/.test(v)) {
+            alert("Solo se permiten números y espacios.");
+            e.preventDefault();
+            return;
+        }
+
+        if (/\s{2,}/.test(v)) {
+            alert("No se permiten espacios consecutivos.");
+            e.preventDefault();
+            return;
+        }
+    });
+
+</script>
 </body>
 </html>
+
 
