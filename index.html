@@ -1,228 +1,55 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reporte de Horas Extra Gus Comercial</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #e8f5e9;
-      margin: 0;
-      padding: 20px;
-    }
-    .form-container {
-      background-color: #ffffff;
-      max-width: 600px;
-      margin: auto;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    }
-    .header {
-      display: flex;
-      align-items: center; /* Centrar logo y texto */
-      justify-content: center;
-      gap: 15px; /* Espacio entre logo y texto */
-      margin-bottom: 10px;
-    }
-    .header img {
-      height: 80px; /* Logo agrandado */
-    }
-    .header h2 {
-      color: #2B2D42; /* Azul oscuro */
-      margin: 0;
-      font-size: 24px;
-      text-align: center;
-    }
-    .divider {
-      height: 2px;
-      background-color: #2B2D42;
-      margin: 0 auto 20px auto;
-      width: 80%;
-      border-radius: 10px;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 15px;
-    }
-    input, select, textarea, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 6px;
-      border-radius: 8px;
-      border: 1px solid #999;
-      box-sizing: border-box;
-      font-size: 16px;
-    }
-    button {
-      background-color: #38896F; /* Verde nuevo */
-      color: white;
-      border: none;
-      margin-top: 25px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background-color: #2E6F5D; /* Verde más oscuro al pasar mouse */
-    }
-    @media (max-width: 480px) {
-      .form-container {
-        padding: 20px 15px;
-      }
-      input, select, textarea, button {
-        font-size: 15px;
-        padding: 10px;
-      }
-      .header {
-        flex-direction: column;
-      }
-      .header img {
-        height: 70px;
+<script>
+  // === RESTRICCIÓN DE FECHA: SOLO HOY Y AYER ===
+  const fechaInput = document.querySelector('input[name="fecha"]');
+  const hoy = new Date();
+  const ayer = new Date(hoy);
+  ayer.setDate(hoy.getDate() - 1);
+  fechaInput.max = hoy.toISOString().split("T")[0];
+  fechaInput.min = ayer.toISOString().split("T")[0];
+
+  // === CÁLCULO AUTOMÁTICO DE HORAS ===
+  const horaInicio = document.querySelector('input[name="hora_inicio"]');
+  const horaFin = document.querySelector('input[name="hora_fin"]');
+  const cantidadHoras = document.querySelector('input[name="cantidad"]');
+
+  function calcularHoras() {
+    if (horaInicio.value && horaFin.value) {
+      const inicio = new Date(`1970-01-01T${horaInicio.value}`);
+      const fin = new Date(`1970-01-01T${horaFin.value}`);
+      if (fin > inicio) {
+        const horas = (fin - inicio) / 1000 / 60 / 60;
+        cantidadHoras.value = horas.toFixed(2);
+      } else {
+        cantidadHoras.value = "";
       }
     }
-  </style>
-</head>
-<body>
+  }
 
-  <div class="form-container">
-    <div class="header">
-      <img src="img.png" alt="Logo Gus Comercial">
-      <h2>Reporte de Horas Extra<br>Gus Comercial</h2>
-    </div>
-    <div class="divider"></div> <!-- Línea elegante -->
+  horaInicio.addEventListener("change", calcularHoras);
+  horaFin.addEventListener("change", calcularHoras);
 
-    <form action="https://script.google.com/macros/s/AKfycbyfhEcKk0oqOfb9C18pAOr4ZhEvfbYUPETLZU8pdraqorA0sD8paDoP9VAV7m8LceHV/exec" method="post">
-      
-      <label>Nombre y Apellido:</label>
-      <select name="nombre" required>
-        <option value="">--Seleccionar--</option>
-        <option value="Alexander Leon">Alexander Leon</option>
-        <option value="Christopher Santos">Christopher Santo</option>
-        <option value="Yohandry Santos">Yohandry Santos</option>
-        <option value="Evaristo Vidal">Evaristo Vidal</option>
-        <option value="Greidin Hernandez">Greidin Hernandez</option>
-        <option value="Marcos Vidal">Marcos Vidal</option>
-        <option value="Miguel Angel">Miguel Angel</option>
-        <option value="Oliver Martinez">Oliver Martinez</option>
-        <option value="Robert Mendez">Robert Mendez</option>
-        <option value="Jose Valentin">Jose Valentin</option>
-      </select>
+  // === RESTRICCIÓN PARA ORDEN / FACTURA: SOLO NÚMEROS Y ESPACIO ===
+  const conceptoInput = document.getElementById("concepto");
 
-      <label>Fecha:</label>
-      <input type="date" name="fecha" required>
+  // Bloquear letras y caracteres no permitidos al teclear
+  conceptoInput.addEventListener("keypress", function (e) {
+    const char = e.key;
 
-      <label>Hora inicia:</label>
-      <input type="time" name="hora_inicio" required>
+    // Permitir teclas de control
+    const controlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+    if (controlKeys.includes(char)) return;
 
-      <label>Hora finaliza:</label>
-      <input type="time" name="hora_fin" required>
+    // Permitir solo dígitos y espacio
+    const regex = /^[0-9 ]$/;
 
-      <label>Cantidad de horas reportadas:</label>
-      <input type="number" name="cantidad" step="0.5" min="0.5" required readonly>
-
-      <!-- CAMPO ORDEN / FACTURA ASOCIADA -->
-      <label>Orden o Factura Asociada:</label>
-      <input
-        type="text"
-        id="concepto"
-        name="concepto"
-        required
-        inputmode="numeric"
-        pattern="^\d{1,5}([,-]\d{1,5})*$"
-        placeholder="Ej: 12345 o 12345-2 o 123,456">
-      <!-- FIN CAMPO ORDEN / FACTURA ASOCIADA -->
-
-      <label>Vehículo:</label>
-      <select name="vehiculo" required>
-        <option value="">--Seleccionar--</option>
-        <option value="G-01">G-01</option>
-        <option value="G-02">G-02</option>
-        <option value="G-03">G-03</option>
-        <option value="G-04">G-04</option>
-        <option value="G-05">G-05</option>
-        <option value="G-06">G-06</option>
-        <option value="G-07">G-07</option>
-        <option value="G-08">G-08</option>
-        <option value="G-09">G-09</option>
-        <option value="G-10">G-10</option>
-        <option value="No aplica">No aplica</option>
-      </select>
-
-      <label>Pre-autorizada por:</label>
-      <select name="autorizado_por" required>
-        <option value="">--Seleccionar--</option>
-        <option value="Richard">Richard</option>
-        <option value="Juana">Juana</option>
-        <option value="Gugi">Gugi</option>
-      </select>
-
-      <button type="submit">Enviar</button>
-
-    </form>
-  </div>
-
-  <script>
-    // === RESTRICCIÓN DE FECHA: SOLO HOY Y AYER ===
-    const fechaInput = document.querySelector('input[name="fecha"]');
-    const hoy = new Date();
-    const ayer = new Date(hoy);
-    ayer.setDate(hoy.getDate() - 1);
-    fechaInput.max = hoy.toISOString().split("T")[0];
-    fechaInput.min = ayer.toISOString().split("T")[0];
-
-    // === CÁLCULO AUTOMÁTICO DE HORAS ===
-    const horaInicio = document.querySelector('input[name="hora_inicio"]');
-    const horaFin = document.querySelector('input[name="hora_fin"]');
-    const cantidadHoras = document.querySelector('input[name="cantidad"]');
-
-    function calcularHoras() {
-      if (horaInicio.value && horaFin.value) {
-        const inicio = new Date(`1970-01-01T${horaInicio.value}`);
-        const fin = new Date(`1970-01-01T${horaFin.value}`);
-        if (fin > inicio) {
-          const horas = (fin - inicio) / 1000 / 60 / 60;
-          cantidadHoras.value = horas.toFixed(2);
-        } else {
-          cantidadHoras.value = "";
-        }
-      }
+    if (!regex.test(char)) {
+      e.preventDefault();
     }
+  });
 
-    horaInicio.addEventListener("change", calcularHoras);
-    horaFin.addEventListener("change", calcularHoras);
-
-    // === RESTRICCIÓN PARA ORDEN O FACTURA ASOCIADA ===
-    const conceptoInput = document.getElementById("concepto");
-
-    // Bloquear letras y caracteres no permitidos al teclear
-    conceptoInput.addEventListener("keypress", function (e) {
-      const char = e.key;
-
-      // Permitir teclas de control (backspace, tab, etc.) a través de keyCode
-      const controlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
-      if (controlKeys.includes(e.key)) {
-        return;
-      }
-
-      // Permitir combinaciones con Ctrl/Meta (copiar, pegar, etc.)
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-      // Solo permitir dígitos, coma y guion
-      const regex = /[0-9,-]/;
-
-      if (!regex.test(char)) {
-        e.preventDefault();
-      }
-    });
-
-    // Limpiar cualquier cosa rara pegada desde el portapapeles
-    conceptoInput.addEventListener("input", function () {
-      // Eliminar todo lo que no sea dígito, coma o guion
-      this.value = this.value.replace(/[^0-9,-]/g, "");
-    });
-  </script>
-
-</body>
-</html>
+  // Limpiar cualquier cosa rara pegada desde el portapapeles
+  conceptoInput.addEventListener("input", function () {
+    // Dejar solo dígitos y espacio
+    this.value = this.value.replace(/[^0-9 ]/g, "");
+  });
+</script>
