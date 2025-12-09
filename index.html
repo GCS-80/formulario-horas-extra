@@ -80,31 +80,8 @@
       }
       .header img {
         height: 70px;
-<script>
-  // === RESTRICCIÓN DE FECHA: SOLO HOY Y AYER ===
-  const fechaInput = document.querySelector('input[name="fecha"]');
-  const hoy = new Date();
-  const ayer = new Date(hoy);
-  ayer.setDate(hoy.getDate() - 1);
-  fechaInput.max = hoy.toISOString().split("T")[0];
-  fechaInput.min = ayer.toISOString().split("T")[0];
-
-  // === CÁLCULO AUTOMÁTICO DE HORAS ===
-  const horaInicio = document.querySelector('input[name="hora_inicio"]');
-  const horaFin = document.querySelector('input[name="hora_fin"]');
-  const cantidadHoras = document.querySelector('input[name="cantidad"]');
-
-  function calcularHoras() {
-    if (horaInicio.value && horaFin.value) {
-      const inicio = new Date(`1970-01-01T${horaInicio.value}`);
-      const fin = new Date(`1970-01-01T${horaFin.value}`);
-      if (fin > inicio) {
-        const horas = (fin - inicio) / 1000 / 60 / 60;
-        cantidadHoras.value = horas.toFixed(2);
-      } else {
-        cantidadHoras.value = "";
-}
-}
+      }
+    }
   </style>
 </head>
 <body>
@@ -116,7 +93,7 @@
     </div>
     <div class="divider"></div> <!-- Línea elegante -->
 
-    <form action="https://script.google.com/macros/s/AKfycbyfhEcKk0oqOfb9C18pAOr4ZhEvfbYUPETLZU8pdraqorA0sD8paDoP9VAV7m8LceHV/exec" method="post">
+    <form id="horasForm" action="https://script.google.com/macros/s/AKfycbyfhEcKk0oqOfb9C18pAOr4ZhEvfbYUPETLZU8pdraqorA0sD8paDoP9VAV7m8LceHV/exec" method="post">
       
       <label>Nombre y Apellido:</label>
       <select name="nombre" required>
@@ -135,23 +112,15 @@
 
       <label>Fecha:</label>
       <input type="date" name="fecha" required>
-  }
 
       <label>Hora inicia:</label>
       <input type="time" name="hora_inicio" required>
-  horaInicio.addEventListener("change", calcularHoras);
-  horaFin.addEventListener("change", calcularHoras);
 
       <label>Hora finaliza:</label>
       <input type="time" name="hora_fin" required>
-  // === RESTRICCIÓN PARA ORDEN / FACTURA: SOLO NÚMEROS Y ESPACIO ===
-  const conceptoInput = document.getElementById("concepto");
 
       <label>Cantidad de horas reportadas:</label>
       <input type="number" name="cantidad" step="0.5" min="0.5" required readonly>
-  // Bloquear letras y caracteres no permitidos al teclear
-  conceptoInput.addEventListener("keypress", function (e) {
-    const char = e.key;
 
       <!-- CAMPO ORDEN / FACTURA ASOCIADA -->
       <label>Orden o Factura Asociada:</label>
@@ -161,12 +130,9 @@
         name="concepto"
         required
         inputmode="numeric"
-        pattern="^\d{1,5}([,-]\d{1,5})*$"
-        placeholder="Ej: 12345 o 12345-2 o 123,456">
+        pattern="^[0-9 ]+$"
+        placeholder="Ej: 12345 678 999">
       <!-- FIN CAMPO ORDEN / FACTURA ASOCIADA -->
-    // Permitir teclas de control
-    const controlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
-    if (controlKeys.includes(char)) return;
 
       <label>Vehículo:</label>
       <select name="vehiculo" required>
@@ -183,8 +149,6 @@
         <option value="G-10">G-10</option>
         <option value="No aplica">No aplica</option>
       </select>
-    // Permitir solo dígitos y espacio
-    const regex = /^[0-9 ]$/;
 
       <label>Pre-autorizada por:</label>
       <select name="autorizado_por" required>
@@ -224,50 +188,95 @@
           cantidadHoras.value = "";
         }
       }
-    if (!regex.test(char)) {
-      e.preventDefault();
-}
-  });
+    }
 
     horaInicio.addEventListener("change", calcularHoras);
     horaFin.addEventListener("change", calcularHoras);
 
-    // === RESTRICCIÓN PARA ORDEN O FACTURA ASOCIADA ===
+    // === RESTRICCIÓN PARA ORDEN / FACTURA: SOLO NÚMEROS Y ESPACIO ===
     const conceptoInput = document.getElementById("concepto");
 
-    // Bloquear letras y caracteres no permitidos al teclear
-    conceptoInput.addEventListener("keypress", function (e) {
-      const char = e.key;
+    // --- 1. Bloquear caracteres no permitidos al escribir ---
+    conceptoInput.addEventListener("keydown", function (e) {
+      const key = e.key;
 
-      // Permitir teclas de control (backspace, tab, etc.) a través de keyCode
-      const controlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
-      if (controlKeys.includes(e.key)) {
+      // Permitir teclas de control y navegación
+      const allowedControlKeys = ["Backspace", "Tab", "ArrowLeft", "ArrowRight", "Delete", "Home", "End"];
+      if (allowedControlKeys.includes(key) || e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // Permitir solo dígitos y espacio
+      const regex = /^[0-9 ]$/;
+      if (!regex.test(key)) {
+        e.preventDefault();
         return;
       }
 
-      // Permitir combinaciones con Ctrl/Meta (copiar, pegar, etc.)
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-      // Solo permitir dígitos, coma y guion
-      const regex = /[0-9,-]/;
-
-      if (!regex.test(char)) {
+      // No permitir comenzar con espacio
+      if (key === " " && this.value.length === 0) {
         e.preventDefault();
+        return;
+      }
+
+      // No permitir doble espacio
+      if (key === " " && this.value.slice(-1) === " ") {
+        e.preventDefault();
+        return;
       }
     });
 
-    // Limpiar cualquier cosa rara pegada desde el portapapeles
+    // --- 2. Limpieza automática al pegar / introducir ---
     conceptoInput.addEventListener("input", function () {
-      // Eliminar todo lo que no sea dígito, coma o guion
-      this.value = this.value.replace(/[^0-9,-]/g, "");
+      let val = this.value;
+
+      // Eliminar todo lo que no sea dígito o espacio
+      val = val.replace(/[^0-9 ]/g, "");
+
+      // Quitar espacios al inicio y final
+      val = val.replace(/^\s+/, "").replace(/\s+$/, "");
+
+      // Reemplazar múltiples espacios por uno solo
+      val = val.replace(/\s{2,}/g, " ");
+
+      this.value = val;
+    });
+
+    // --- 3. Validación final antes de enviar el formulario ---
+    const form = document.getElementById("horasForm");
+    form.addEventListener("submit", function (e) {
+      // Validar campo concepto
+      const val = conceptoInput.value;
+
+      if (!val || val.trim().length === 0) {
+        alert("Debe ingresar una orden o factura válida.");
+        e.preventDefault();
+        return;
+      }
+
+      // No permitir espacios al inicio o al final
+      if (/^\s|\s$/.test(conceptoInput.value)) {
+        alert("El campo Orden o Factura Asociada no puede comenzar ni terminar con espacio.");
+        e.preventDefault();
+        return;
+      }
+
+      // No permitir dobles espacios
+      if (/\s{2,}/.test(conceptoInput.value)) {
+        alert("No se permiten espacios consecutivos en Orden o Factura Asociada.");
+        e.preventDefault();
+        return;
+      }
+
+      // Solo dígitos y espacios (refuerzo)
+      if (!/^[0-9 ]+$/.test(conceptoInput.value)) {
+        alert("Solo se permiten números y espacios en Orden o Factura Asociada.");
+        e.preventDefault();
+        return;
+      }
+
+      // (Opcional) Validar que cada bloque tenga entre 1 y 5 dígitos si lo deseas.
+      // Por ahora no lo forzamos; si quieres esa regla, dime y la activo aquí.
     });
   </script>
 
 </body>
 </html>
-  // Limpiar cualquier cosa rara pegada desde el portapapeles
-  conceptoInput.addEventListener("input", function () {
-    // Dejar solo dígitos y espacio
-    this.value = this.value.replace(/[^0-9 ]/g, "");
-  });
-</script>
